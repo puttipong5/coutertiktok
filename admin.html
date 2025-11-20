@@ -26,6 +26,9 @@
         font-size: 16px;
         width: 100px;
       }
+      .button-row {
+        margin-top: 10px;
+      }
     </style>
   </head>
   <body>
@@ -35,6 +38,7 @@
       <h3>Current Value (X) Control</h3>
       <p id="currentStatus">Current X: Loading...</p>
 
+      <!-- ส่วนกำหนดค่า X โดยตรง -->
       <input
         type="number"
         id="newCurrentInput"
@@ -45,10 +49,21 @@
 
       <hr style="margin: 10px 0" />
 
-      <button onclick="changeScore(1)">+1</button>
-      <button onclick="changeScore(-1)">-1</button>
-      <button onclick="changeScore(10)">+10</button>
-      <button onclick="changeScore(-10)">-10</button>
+      <!-- NEW: ปุ่มเพิ่ม/ลดค่าที่หลากหลายขึ้น -->
+      <div class="button-row">
+        <button onclick="changeScore(1)">+1</button>
+        <button onclick="changeScore(-1)">-1</button>
+        <button onclick="changeScore(5)">+5</button>
+        <button onclick="changeScore(-5)">-5</button>
+        <button onclick="changeScore(10)">+10</button>
+        <button onclick="changeScore(-10)">-10</button>
+      </div>
+      <div class="button-row">
+        <button onclick="changeScore(15)">+15</button>
+        <button onclick="changeScore(-15)">-15</button>
+        <button onclick="changeScore(20)">+20</button>
+        <button onclick="changeScore(-20)">-20</button>
+      </div>
     </div>
 
     <div class="control-group">
@@ -87,9 +102,7 @@
           .catch((error) => console.error("Error updating score:", error));
       }
 
-      // **************************************************
-      // NEW: ฟังก์ชันสำหรับกำหนดค่า X โดยตรง
-      // **************************************************
+      // ----------------- ฟังก์ชันสำหรับกำหนดค่า X โดยตรง -----------------
       function setNewCurrent() {
         const newCurrent = document.getElementById("newCurrentInput").value;
 
@@ -125,6 +138,8 @@
 
       // ----------------- ฟังก์ชันรีเซ็ต -----------------
       function resetAll() {
+        // NOTE: การใช้ confirm() อาจจะไม่แสดงผลในบางสภาพแวดล้อม (เช่น iframe)
+        // แต่ถูกคงไว้ตามโค้ดเดิม
         if (
           confirm(
             "คุณแน่ใจหรือไม่ที่จะรีเซ็ตค่า X เป็น 0 และ Y เป็นค่าปัจจุบัน?"
@@ -165,7 +180,8 @@
 
       // โหลดสถานะครั้งแรก
       updateStatusDisplay();
-      setInterval(updateStatusDisplay, 2000); // อัปเดตสถานะทุก 2 วินาที (ลดจาก 5s เพื่อความเร็ว)
+      // อัปเดตสถานะทุก 2 วินาทีเพื่อให้สถานะปัจจุบันใน Admin Panel ไม่หน่วงเกินไป
+      setInterval(updateStatusDisplay, 2000);
     </script>
   </body>
 </html>
