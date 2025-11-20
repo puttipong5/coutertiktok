@@ -3,7 +3,13 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Live Counter Widget - Color and Bounce</title>
+    <title>Live Counter Widget - MrBeast Style</title>
+    <!-- 1. เพิ่ม Font 'Bebas Neue' เพื่อให้ได้สไตล์ที่โดดเด่น/บล็อกกี้ -->
+    <link
+      href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap"
+      rel="stylesheet"
+    />
+
     <style>
       body {
         /* ทำให้พื้นหลังโปร่งใสเมื่อใช้ใน OBS/Live Studio */
@@ -13,20 +19,28 @@
         display: flex;
         justify-content: center;
         align-items: center;
-        height: 100vh;
+        /* ใช้ min-height เพื่อให้ Widget อยู่ตรงกลางได้ดีใน OBS */
+        min-height: 100vh;
       }
 
       #counter-container {
-        font-size: 100px;
-        font-weight: bold; /* ทำให้เป็นตัวหนา */
-        font-family: "Arial", sans-serif;
-        display: flex; /* จัดให้เนื้อหาอยู่บรรทัดเดียวกัน */
+        /* 2. เพิ่มขนาดตัวอักษรให้ใหญ่มาก (20% ของความสูงหน้าต่าง) */
+        font-size: 20vh;
+        font-weight: bold;
+        /* 1. กำหนด Font Family ให้เป็น Bebas Neue */
+        font-family: "Bebas Neue", cursive, sans-serif;
+        display: flex;
         align-items: center;
+        line-height: 1; /* จัดให้อยู่ในบรรทัดเดียวกัน */
       }
 
       /* ใช้คลาส .dynamic-color เพื่อควบคุมสีของ X, / และ Y */
       .dynamic-color {
-        transition: color 0.3s ease;
+        transition: color 0.3s ease, transform 0.1s ease;
+        /* 3. เพิ่ม Outline สีดำหนาโดยใช้ Text Shadow */
+        text-shadow: -4px -4px 0 #000, /* Top-left */ 4px -4px 0 #000,
+          /* Top-right */ -4px 4px 0 #000, /* Bottom-left */ 4px 4px 0 #000,
+          /* Bottom-right */ 0px 0px 10px rgba(0, 0, 0, 0.5); /* เพิ่มเงาเล็กน้อย */
       }
 
       /* --- CSS Bouncing Animation --- */
@@ -35,8 +49,8 @@
           transform: scale(1);
         }
         50% {
-          transform: scale(1.1);
-        } /* ขยายเล็กน้อย */
+          transform: scale(1.15); /* ขยายใหญ่ขึ้นเล็กน้อย */
+        }
         100% {
           transform: scale(1);
         }
@@ -56,7 +70,17 @@
     </div>
 
     <script>
-      const API_URL = "https://servertiktokcounter.onrender.com/api/status";
+      // ----------------- NEW: ฟังก์ชันดึง Counter ID -----------------
+      function getCounterIdFromUrl() {
+        const urlParams = new URLSearchParams(window.location.search);
+        return urlParams.get("id") || "default_user";
+      }
+      const COUNTER_ID = getCounterIdFromUrl();
+
+      // สร้าง URL API แบบไดนามิกโดยใช้ Counter ID
+      const API_URL = `https://servertiktokcounter.onrender.com/api/status?id=${COUNTER_ID}`;
+
+      // ----------------- Elements -----------------
       const CURRENT_VALUE_ELEM = document.getElementById("current-value");
       const TARGET_VALUE_ELEM = document.getElementById("target-value");
       const SEPARATOR_ELEM = document.getElementById("separator");
@@ -74,12 +98,12 @@
       function applyColor(value) {
         let color;
         if (value === 0) {
-          color = "yellow"; // X = 0, สีเหลือง
+          color = "#FFD700"; // X = 0, สีเหลืองทอง
         } else if (value > 0) {
-          color = "lime"; // X > 0, สีเขียว
+          color = "#00FF7F"; // X > 0, สีเขียวมรกต (สว่างกว่า lime)
         } else {
           // value < 0
-          color = "red"; // X < 0, สีแดง
+          color = "#FF4500"; // X < 0, สีส้มแดง (สวยกว่า red เฉยๆ)
         }
 
         // ใช้ loop เพื่อกำหนดสีให้กับทุกองค์ประกอบพร้อมกัน
@@ -92,9 +116,12 @@
         // เพิ่มและลบคลาส 'bounce' เพื่อให้ Animation ทำงาน
         ALL_ELEMENTS.forEach((elem) => {
           elem.classList.remove("bounce");
-          // ใช้ requestAnimationFrame หรือ setTimeout เล็กน้อยเพื่อให้เบราว์เซอร์รีเซ็ต animation ก่อนเริ่มใหม่
-          void elem.offsetWidth; // บังคับให้เบราว์เซอร์รีโฟลว์
-          elem.classList.add("bounce");
+          // ใช้ requestAnimationFrame เพื่อให้เบราว์เซอร์รีเซ็ต animation ก่อนเริ่มใหม่
+          requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+              elem.classList.add("bounce");
+            });
+          });
         });
       }
 
@@ -122,8 +149,9 @@
         } catch (error) {
           console.error("Failed to fetch counter data:", error);
           CURRENT_VALUE_ELEM.textContent = "Err";
+          TARGET_VALUE_ELEM.textContent = "Err";
+
           // เมื่อมี Error ให้ตั้งค่าสีเป็นเทา เพื่อแจ้งเตือน
-          applyColor(null);
           ALL_ELEMENTS.forEach((elem) => {
             elem.style.color = "gray";
             elem.classList.remove("bounce");
