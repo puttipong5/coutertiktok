@@ -4,43 +4,89 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Live Counter Widget - MrBeast Style</title>
-    <!-- 1. เพิ่ม Font 'Bebas Neue' เพื่อให้ได้สไตล์ที่โดดเด่น/บล็อกกี้ -->
     <link
       href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Prompt:wght@700&display=swap"
       rel="stylesheet"
     />
 
     <style>
       body {
-        /* ทำให้พื้นหลังโปร่งใสเมื่อใช้ใน OBS/Live Studio */
+        /* ทำให้พื้นหลังโปร่งใส */
         background-color: transparent;
         margin: 0;
         padding: 0;
         display: flex;
+        flex-direction: column;
         justify-content: center;
         align-items: center;
-        /* ใช้ min-height เพื่อให้ Widget อยู่ตรงกลางได้ดีใน OBS */
         min-height: 100vh;
       }
 
+      /* --- สไตล์สำหรับ Change Indicator: "โดเนท 1 บาท" และ "บวก 1 ลบ" --- */
+      /* ใช้คลาสรวมสำหรับสไตล์พื้นฐานของ Indicator ทุกแถว */
+      .indicator-row {
+        display: flex;
+        margin-bottom: 2vh;
+        font-family: "Prompt", sans-serif;
+        font-weight: 700;
+        font-size: 10vh; /* ขนาดเท่าเดิม 10vh */
+        line-height: 1;
+        text-shadow: -3px -3px 0 #000, 3px -3px 0 #000, -3px 3px 0 #000,
+          3px 3px 0 #000;
+        gap: 1.5vh;
+      }
+
+      /* สีสำหรับ "โดเนท" (ใช้สีขาวแบบ indicator-number) */
+      .indicator-donate {
+        color: white;
+      }
+
+      /* สีน้ำเงินสำหรับ "1 บาท" */
+      .indicator-blue {
+        color: #007bff;
+      }
+
+      /* สีสำหรับ "บวก" */
+      .indicator-plus {
+        color: #00ff7f;
+        /* ลบ opacity: 0.5; ออกเพื่อให้แสดงผลเต็ม Opacity (1.0) */
+        transition: opacity 0.3s ease-out;
+      }
+      /* สีสำหรับ "ลบ" */
+      .indicator-minus {
+        color: #ff4500;
+        /* ลบ opacity: 0.5; ออกเพื่อให้แสดงผลเต็ม Opacity (1.0) */
+        transition: opacity 0.3s ease-out;
+      }
+      .indicator-number {
+        color: white;
+        font-family: "Bebas Neue", cursive, sans-serif;
+      }
+
+      /* คลาสสำหรับกระพริบ: เมื่อมีการเปลี่ยนแปลง จะใช้ Opacity: 1.0 */
+      .flash-active {
+        /* เนื่องจาก Opacity เริ่มต้นเป็น 1.0 อยู่แล้ว คลาสนี้จึงไม่มีผลอะไร แต่ยังเก็บไว้เพื่อความยืดหยุ่น */
+        opacity: 1 !important;
+      }
+
+      /* --- สไตล์สำหรับ Counter หลัก: "X/Y" --- */
       #counter-container {
-        /* 2. เพิ่มขนาดตัวอักษรให้ใหญ่มาก (20% ของความสูงหน้าต่าง) */
         font-size: 20vh;
         font-weight: bold;
-        /* 1. กำหนด Font Family ให้เป็น Bebas Neue */
         font-family: "Bebas Neue", cursive, sans-serif;
         display: flex;
         align-items: center;
-        line-height: 1; /* จัดให้อยู่ในบรรทัดเดียวกัน */
+        line-height: 1;
       }
 
-      /* ใช้คลาส .dynamic-color เพื่อควบคุมสีของ X, / และ Y */
       .dynamic-color {
         transition: color 0.3s ease, transform 0.1s ease;
-        /* 3. เพิ่ม Outline สีดำหนาโดยใช้ Text Shadow */
-        text-shadow: -4px -4px 0 #000, /* Top-left */ 4px -4px 0 #000,
-          /* Top-right */ -4px 4px 0 #000, /* Bottom-left */ 4px 4px 0 #000,
-          /* Bottom-right */ 0px 0px 10px rgba(0, 0, 0, 0.5); /* เพิ่มเงาเล็กน้อย */
+        text-shadow: -4px -4px 0 #000, 4px -4px 0 #000, -4px 4px 0 #000,
+          4px 4px 0 #000, 0px 0px 10px rgba(0, 0, 0, 0.5);
       }
 
       /* --- CSS Bouncing Animation --- */
@@ -49,20 +95,30 @@
           transform: scale(1);
         }
         50% {
-          transform: scale(1.15); /* ขยายใหญ่ขึ้นเล็กน้อย */
+          transform: scale(1.15);
         }
         100% {
           transform: scale(1);
         }
       }
 
-      /* คลาสที่ใช้เรียก Animation เมื่อมีการเปลี่ยนแปลงค่า */
       .bounce {
         animation: bounce-animation 0.4s ease-out;
       }
     </style>
   </head>
   <body>
+    <div id="donate-indicator-container" class="indicator-row">
+      <span class="indicator-donate">โดเนท</span>
+      <span class="indicator-blue">1 บาท</span>
+    </div>
+
+    <div id="change-indicator-container" class="indicator-row">
+      <span id="indicator-plus" class="indicator-plus">บวก</span>
+      <span id="indicator-number" class="indicator-number">1</span>
+      <span id="indicator-minus" class="indicator-minus">ลบ</span>
+    </div>
+
     <div id="counter-container">
       <span id="current-value" class="dynamic-color">0</span>
       <span id="separator" class="dynamic-color">/</span>
@@ -70,7 +126,7 @@
     </div>
 
     <script>
-      // ----------------- NEW: ฟังก์ชันดึง Counter ID -----------------
+      // ----------------- ฟังก์ชันดึง Counter ID -----------------
       function getCounterIdFromUrl() {
         const urlParams = new URLSearchParams(window.location.search);
         return urlParams.get("id") || "default_user";
@@ -85,10 +141,11 @@
       const TARGET_VALUE_ELEM = document.getElementById("target-value");
       const SEPARATOR_ELEM = document.getElementById("separator");
 
-      // เก็บค่า X เก่าไว้ตรวจสอบการเปลี่ยนแปลง
-      let lastX = 0;
+      // Indicator Elements สำหรับ "บวก 1 ลบ"
+      const INDICATOR_PLUS = document.getElementById("indicator-plus");
+      const INDICATOR_MINUS = document.getElementById("indicator-minus");
 
-      // อ้างอิงถึงทุกองค์ประกอบที่ต้องการเปลี่ยนสีพร้อมกัน
+      let lastX = 0;
       const ALL_ELEMENTS = [
         CURRENT_VALUE_ELEM,
         TARGET_VALUE_ELEM,
@@ -100,23 +157,44 @@
         if (value === 0) {
           color = "#FFD700"; // X = 0, สีเหลืองทอง
         } else if (value > 0) {
-          color = "#00FF7F"; // X > 0, สีเขียวมรกต (สว่างกว่า lime)
+          color = "#00FF7F"; // X > 0, สีเขียวมรกต
         } else {
           // value < 0
-          color = "#FF4500"; // X < 0, สีส้มแดง (สวยกว่า red เฉยๆ)
+          color = "#FF4500"; // X < 0, สีส้มแดง
         }
 
-        // ใช้ loop เพื่อกำหนดสีให้กับทุกองค์ประกอบพร้อมกัน
         ALL_ELEMENTS.forEach((elem) => {
           elem.style.color = color;
         });
+      }
+
+      // ฟังก์ชันกระพริบคำว่า 'บวก' หรือ 'ลบ' ชั่วคราว
+      function flashChangeIndicator(change) {
+        // รีเซ็ตการกระพริบก่อน
+        INDICATOR_PLUS.classList.remove("flash-active");
+        INDICATOR_MINUS.classList.remove("flash-active");
+
+        // *** ลบการตั้งค่า opacity: 0.5; ใน JS ออกแล้ว ***
+
+        if (change > 0) {
+          // ถ้าค่าเพิ่มขึ้น ให้คำว่า 'บวก' สว่างขึ้น (แต่ตอนนี้จะสว่างเต็มอยู่แล้ว)
+          INDICATOR_PLUS.classList.add("flash-active");
+        } else if (change < 0) {
+          // ถ้าค่าลดลง ให้คำว่า 'ลบ' สว่างขึ้น (แต่ตอนนี้จะสว่างเต็มอยู่แล้ว)
+          INDICATOR_MINUS.classList.add("flash-active");
+        }
+
+        // ตั้งเวลาให้คลาส flash-active ถูกลบออก (เพื่อให้ Animation เสร็จสมบูรณ์)
+        setTimeout(() => {
+          INDICATOR_PLUS.classList.remove("flash-active");
+          INDICATOR_MINUS.classList.remove("flash-active");
+        }, 400);
       }
 
       function triggerBounce() {
         // เพิ่มและลบคลาส 'bounce' เพื่อให้ Animation ทำงาน
         ALL_ELEMENTS.forEach((elem) => {
           elem.classList.remove("bounce");
-          // ใช้ requestAnimationFrame เพื่อให้เบราว์เซอร์รีเซ็ต animation ก่อนเริ่มใหม่
           requestAnimationFrame(() => {
             requestAnimationFrame(() => {
               elem.classList.add("bounce");
@@ -133,11 +211,13 @@
           const currentX = data.current;
           const targetY = data.target;
 
-          // 1. ตรวจสอบ Animation
+          const change = currentX - lastX;
+
+          // 1. ตรวจสอบ Animation และ Indicator
           if (currentX !== lastX) {
-            // ถ้าค่า X มีการเปลี่ยนแปลง ให้เรียกใช้ Bouncing Animation
             triggerBounce();
-            lastX = currentX; // อัปเดตค่าเก่า
+            flashChangeIndicator(change);
+            lastX = currentX;
           }
 
           // 2. อัปเดตค่าตัวเลข
@@ -151,11 +231,16 @@
           CURRENT_VALUE_ELEM.textContent = "Err";
           TARGET_VALUE_ELEM.textContent = "Err";
 
-          // เมื่อมี Error ให้ตั้งค่าสีเป็นเทา เพื่อแจ้งเตือน
+          // เมื่อมี Error ให้ตั้งค่าสีเป็นเทา
           ALL_ELEMENTS.forEach((elem) => {
             elem.style.color = "gray";
             elem.classList.remove("bounce");
           });
+
+          // รีเซ็ต Indicator เมื่อมี Error
+          INDICATOR_PLUS.classList.remove("flash-active");
+          INDICATOR_MINUS.classList.remove("flash-active");
+          // *** ลบการตั้งค่า opacity: 0.5; ใน JS ออกแล้ว ***
         }
       }
 
