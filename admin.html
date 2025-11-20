@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="th">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Counter Admin Panel</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        padding: 20px;
+      }
+      .control-group {
+        margin-bottom: 20px;
+        padding: 15px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+      }
+      button {
+        padding: 10px 20px;
+        margin: 5px;
+        cursor: pointer;
+        font-size: 16px;
+      }
+      input[type="number"] {
+        padding: 10px;
+        font-size: 16px;
+        width: 100px;
+      }
+    </style>
+  </head>
+  <body>
+    <h2>🚀 Live Counter Control</h2>
+
+    <div class="control-group">
+      <h3>Current Value (X) Control</h3>
+      <p id="currentStatus">Current X: Loading...</p>
+      <button onclick="changeScore(1)">+1</button>
+      <button onclick="changeScore(-1)">-1</button>
+      <button onclick="changeScore(10)">+10</button>
+      <button onclick="changeScore(-10)">-10</button>
+    </div>
+
+    <div class="control-group">
+      <h3>Target Value (Y) Control</h3>
+      <p id="targetStatus">Current Y: Loading...</p>
+      <input
+        type="number"
+        id="newTargetInput"
+        placeholder="ใส่เป้าหมายใหม่"
+        value="10"
+      />
+      <button onclick="setNewTarget()">กำหนดเป้าหมายใหม่ (Y)</button>
+    </div>
+
+    <div class="control-group">
+      <h3>Reset</h3>
+      <button onclick="resetAll()">รีเซ็ต X & Y (X=0)</button>
+    </div>
+
+    <script>
+      const BASE_URL = "http://localhost:3000/api/"; // **สำคัญ:** เปลี่ยนตามที่อยู่เซิร์ฟเวอร์ของคุณ
+
+      // ----------------- ฟังก์ชันควบคุม X -----------------
+      function changeScore(amount) {
+        fetch(BASE_URL + "update_current", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ change: amount }),
+        })
+          .then((response) => {
+            if (!response.ok) throw new Error("Update X failed");
+            console.log(`Updated X by ${amount}`);
+            updateStatusDisplay();
+          })
+          .catch((error) => console.error("Error updating score:", error));
+      }
+
+      // ----------------- ฟังก์ชันควบคุม Y -----------------
+      function setNewTarget() {
+        const newTarget = document.getElementById("newTargetInput").value;
+        fetch(BASE_URL + "set_target", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ new_target: parseInt(newTarget) }),
+        })
+          .then((response) => {
+            if (!response.ok) throw new Error("Update Y failed");
+            console.log(`New Target (Y) set to ${newTarget}`);
+            updateStatusDisplay();
+          })
+          .catch((error) => console.error("Error setting target:", error));
+      }
+
+      // ----------------- ฟังก์ชันรีเซ็ต -----------------
+      function resetAll() {
+        if (
+          confirm(
+            "คุณแน่ใจหรือไม่ที่จะรีเซ็ตค่า X เป็น 0 และ Y เป็นค่าปัจจุบัน?"
+          )
+        ) {
+          fetch(BASE_URL + "reset", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ current: 0 }), // รีเซ็ต X ให้เป็น 0
+          })
+            .then((response) => {
+              if (!response.ok) throw new Error("Reset failed");
+              console.log("X reset to 0.");
+              updateStatusDisplay();
+            })
+            .catch((error) => console.error("Error resetting:", error));
+        }
+      }
+
+      // ----------------- ฟังก์ชันแสดงสถานะปัจจุบัน -----------------
+      async function updateStatusDisplay() {
+        try {
+          const response = await fetch(BASE_URL + "status");
+          const data = await response.json();
+          document.getElementById(
+            "currentStatus"
+          ).textContent = `Current X: ${data.current}`;
+          document.getElementById(
+            "targetStatus"
+          ).textContent = `Current Y: ${data.target}`;
+        } catch (error) {
+          document.getElementById("currentStatus").textContent =
+            "Current X: API Error";
+          document.getElementById("targetStatus").textContent =
+            "Current Y: API Error";
+        }
+      }
+
+      // โหลดสถานะครั้งแรก
+      updateStatusDisplay();
+      setInterval(updateStatusDisplay, 5000); // อัปเดตสถานะทุก 5 วินาที
+    </script>
+  </body>
+</html>
