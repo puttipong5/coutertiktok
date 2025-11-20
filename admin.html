@@ -34,6 +34,17 @@
     <div class="control-group">
       <h3>Current Value (X) Control</h3>
       <p id="currentStatus">Current X: Loading...</p>
+
+      <input
+        type="number"
+        id="newCurrentInput"
+        placeholder="ใส่ค่า X ใหม่"
+        value="0"
+      />
+      <button onclick="setNewCurrent()">กำหนดค่า X ใหม่</button>
+
+      <hr style="margin: 10px 0" />
+
       <button onclick="changeScore(1)">+1</button>
       <button onclick="changeScore(-1)">-1</button>
       <button onclick="changeScore(10)">+10</button>
@@ -58,7 +69,8 @@
     </div>
 
     <script>
-      const BASE_URL = "https://servertiktokcounter.onrender.com/api/"; // **สำคัญ:** เปลี่ยนตามที่อยู่เซิร์ฟเวอร์ของคุณ
+      // ตรวจสอบ BASE_URL ต้องมี /api/ ปิดท้าย
+      const BASE_URL = "https://servertiktokcounter.onrender.com/api/";
 
       // ----------------- ฟังก์ชันควบคุม X -----------------
       function changeScore(amount) {
@@ -73,6 +85,26 @@
             updateStatusDisplay();
           })
           .catch((error) => console.error("Error updating score:", error));
+      }
+
+      // **************************************************
+      // NEW: ฟังก์ชันสำหรับกำหนดค่า X โดยตรง
+      // **************************************************
+      function setNewCurrent() {
+        const newCurrent = document.getElementById("newCurrentInput").value;
+
+        // เรียก Endpoint 'set_current' ที่ต้องเพิ่มใน server.js
+        fetch(BASE_URL + "set_current", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ new_current: parseInt(newCurrent) }),
+        })
+          .then((response) => {
+            if (!response.ok) throw new Error("Set X failed");
+            console.log(`Current X set to ${newCurrent}`);
+            updateStatusDisplay();
+          })
+          .catch((error) => console.error("Error setting current X:", error));
       }
 
       // ----------------- ฟังก์ชันควบคุม Y -----------------
@@ -133,7 +165,7 @@
 
       // โหลดสถานะครั้งแรก
       updateStatusDisplay();
-      setInterval(updateStatusDisplay, 2000); // อัปเดตสถานะทุก 5 วินาที
+      setInterval(updateStatusDisplay, 2000); // อัปเดตสถานะทุก 2 วินาที (ลดจาก 5s เพื่อความเร็ว)
     </script>
   </body>
 </html>
